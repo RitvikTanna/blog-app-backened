@@ -1,54 +1,46 @@
-import { strict } from 'assert';
-import {Schema,model} from 'monogoose';
-import {userRouter} from '../APIS/userapi.js';
-import {authorRouter} from '../APIS/authorapi.js';
-import {adminRouter} from '../APIS/adminapi.js';
-config();
+import { Schema, model } from "mongoose";
 
 //create user schema
+const userSchema = new Schema({
+  firstName: {
+    type: String,
+    required: [true, "First name is required"]
+  },
 
+  lastName: {
+    type: String
+  },
 
-const userSchema= new Schema({
-    FirstName:{
-        type:String,
-        required:[true,'First name is required']
-    },
+  email: {
+    type: String,
+    required: [true, "Email is required"]
+  },
 
-    LastName:{
-        type:String,
-    },
+  password: {
+    type: String,
+    required: [true, "Password is required"]
+  },
 
-    email:{
-        type:String,
-        required:[true,'Email is required'],
-    },
+  profileImageUrl: {
+    type: String
+  },
 
-    Password:{
-        type:String,
-        required:[true,'Password is required'],
-    },
+  role: {
+    type: String,
+    enum: ["AUTHOR", "USER", "ADMIN"],
+    required: [true, "{VALUE} is an Invalid Role"]
+  },
 
-    profileImageUrl:{
-        type:String,
-    },
-    role:{
-        type:String,
-        enum:['author','user','admin'],
-        required:[true,'{Value} is an Invalid Role']
-    },
-
-    isActive:{
-        type:Boolean,
-        default:true
-    }
+  isActive: {
+    type: Boolean,
+    default: true
+  }
 },
 {
-    timestamps:true,
-    strict:true,
-    versionKey:false
-
-})
-
+  timestamps: true,
+  strict: true,
+  versionKey: false
+});
 
 //create user model
-const UserTypeModel=model('user',userSchema)
+export const UserModel = model("user", userSchema);

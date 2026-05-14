@@ -1,5 +1,4 @@
-import { UserTypeModel } from "../models/UserModel.js";
-
+import { UserModel } from "../models/userModel.js";
 export const checkAuthor = async (req, res, next) => {
   //get author id
   let aid = req.body?.author || req.params?.authorId;
