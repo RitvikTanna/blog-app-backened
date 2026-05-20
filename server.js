@@ -20,8 +20,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "http://localhost:5174",
-      "https://your-frontend.vercel.app", // replace with your frontend URL
+      "https://blog-app-frontened-cgs3.vercel.app"
     ],
     credentials: true,
   })
