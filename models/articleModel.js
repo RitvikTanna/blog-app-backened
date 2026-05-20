@@ -2,7 +2,7 @@ import { Schema, model } from "mongoose";
 
 //create user comment schema
 const userCommentSchema = new Schema({
-  userId: {
+  user: {
     type: Schema.Types.ObjectId,
     ref: "user",
   },

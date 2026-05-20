@@ -77,7 +77,9 @@ userRoute.post("/login", async (req, res, next) => {
 // Get all articles
 userRoute.get("/articles", verifyToken("USER"), async (req, res) => {
 
-  let articles = await ArticleModel.find({ isArticleActive: true });
+  let articles = await ArticleModel.find({ isArticleActive: true })
+    .populate("author", "firstName lastName email")
+    .populate("comments.user", "firstName lastName email");
 
   //  If DB empty, send demo data
   if (articles.length === 0) {
@@ -109,6 +111,17 @@ userRoute.get("/articles", verifyToken("USER"), async (req, res) => {
   });
 });
 
+// Get specific article
+userRoute.get("/article/:articleId", verifyToken("USER", "AUTHOR", "ADMIN"), async (req, res) => {
+  const { articleId } = req.params;
+  const article = await ArticleModel.findOne({ _id: articleId, isArticleActive: true })
+    .populate("author", "firstName lastName email")
+    .populate("comments.user", "firstName lastName email");
+  if (!article) {
+    return res.status(404).json({ message: "Article not found" });
+  }
+  res.status(200).json({ message: "article found", payload: article });
+});
 
 // Add comment
 userRoute.put("/articles", verifyToken("USER"), async (req, res) => {
@@ -123,7 +136,7 @@ userRoute.put("/articles", verifyToken("USER"), async (req, res) => {
     { _id: articleId, isArticleActive: true },
     { $push: { comments: { user, comment } } },
     { new: true, runValidators: true }
-  );
+  ).populate("author", "firstName lastName email").populate("comments.user", "firstName lastName email");
 
   if (!articleWithComment) {
     return res.status(404).json({ message: "Article not found" });
@@ -144,7 +157,7 @@ userRoute.delete("/articles/:articleId/comments/:commentId", verifyToken("USER",
       { _id: articleId },
       { $pull: { comments: { _id: commentId } } },
       { new: true }
-    );
+    ).populate("author", "firstName lastName email").populate("comments.user", "firstName lastName email");
 
     if (!updatedArticle) {
       return res.status(404).json({ message: "Article not found" });

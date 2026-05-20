@@ -9,29 +9,27 @@ import { adminRoute } from "./APIS/adminapi.js";
 import { authorRoute } from "./APIS/authorapi.js";
 import { commonRouter } from "./APIS/commonapi.js";
 
-// Load environment variables
+// ================= LOAD ENV =================
 config();
 
-// Create express app
+// ================= CREATE APP =================
 const app = exp();
 
-
-// ================= CORS FIX =================
+// ================= CORS =================
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
       "http://localhost:5174",
+      "https://your-frontend.vercel.app", // replace with your frontend URL
     ],
     credentials: true,
   })
 );
 
-
 // ================= MIDDLEWARE =================
 app.use(exp.json());
 app.use(cookieParser());
-
 
 // ================= ROUTES =================
 app.use("/user-api", userRoute);
@@ -39,12 +37,10 @@ app.use("/author-api", authorRoute);
 app.use("/admin-api", adminRoute);
 app.use("/common-api", commonRouter);
 
-
-// ================= HEALTH ROUTE =================
+// ================= HOME ROUTE =================
 app.get("/", (req, res) => {
   res.send("Server running successfully");
 });
-
 
 // ================= DATABASE CONNECTION =================
 const connectDB = async () => {
@@ -52,12 +48,6 @@ const connectDB = async () => {
     await connect(process.env.DB_URL);
 
     console.log("DB connection success");
-
-    // Start server
-    app.listen(process.env.PORT, () => {
-      console.log(`Server started on port ${process.env.PORT}`);
-    });
-
   } catch (err) {
     console.log("Err in DB connection", err);
   }
@@ -65,39 +55,39 @@ const connectDB = async () => {
 
 connectDB();
 
-
-// ================= INVALID PATH =================
+// ================= INVALID ROUTE =================
 app.use((req, res) => {
   res.status(404).json({
     message: `${req.url} is invalid path`,
   });
 });
 
-
 // ================= ERROR HANDLER =================
 app.use((err, req, res, next) => {
-
   const status = err.status || err.statusCode || 500;
+
   const isProduction = process.env.NODE_ENV === "production";
 
   let message = err.message || "Unexpected error";
   let details;
 
-  // Validation errors
+  // Validation Error
   if (err.name === "ValidationError") {
     message = "Validation error";
+
     details = Object.values(err.errors || {}).map(
       (e) => e.message
     );
   }
 
-  // Cast error
+  // Cast Error
   if (err.name === "CastError") {
     message = "Invalid value for field";
+
     details = [`${err.path} is invalid`];
   }
 
-  // Duplicate key error
+  // Duplicate Key Error
   if (err.code === 11000) {
     message = "Duplicate value";
 
@@ -108,7 +98,7 @@ app.use((err, req, res, next) => {
     );
   }
 
-  // Strict mode error
+  // Strict Mode Error
   if (err.name === "StrictModeError") {
     message = "Invalid fields provided";
 
@@ -133,7 +123,10 @@ app.use((err, req, res, next) => {
     response.stack = err.stack;
   }
 
-  console.log("err :", err);
+  console.log("ERROR :", err);
 
   res.status(finalStatus).json(response);
 });
+
+// ================= EXPORT APP =================
+export default app;
