@@ -18,10 +18,7 @@ const app = exp();
 // ================= CORS =================
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://blog-app-frontened-cgs3.vercel.app"
-    ],
+    origin: true,
     credentials: true,
   })
 );
