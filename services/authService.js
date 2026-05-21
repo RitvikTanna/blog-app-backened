@@ -2,62 +2,109 @@ import { UserModel } from "../models/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// Register new user
+
+// ================= REGISTER =================
 export const register = async (userObj) => {
-  // Check if user already exists
-  const existingUser = await UserModel.findOne({ email: userObj.email });
-  
-  if (existingUser) {
-    throw new Error("User already exists");
+
+  try {
+
+    // check existing user
+    const existingUser = await UserModel.findOne({
+      email: userObj.email
+    });
+
+    if (existingUser) {
+      throw new Error("User already exists");
+    }
+
+    // hash password
+    const hashedPassword = await bcrypt.hash(
+      userObj.password,
+      10
+    );
+
+    // create user
+    const newUser = new UserModel({
+      ...userObj,
+      password: hashedPassword
+    });
+
+    // save user
+    const savedUser = await newUser.save();
+
+    // remove password from response
+    const { password, ...userWithoutPassword } =
+      savedUser.toObject();
+
+    return userWithoutPassword;
+
+  } catch (err) {
+
+    console.log("REGISTER ERROR:", err);
+
+    throw err;
   }
-
-  // Hash password
-  const hashedPassword = await bcrypt.hash(userObj.password, 10);
-
-  // Create new user
-  const newUser = new UserModel({
-    ...userObj,
-    password: hashedPassword
-  });
-
-  // Save to database
-  const savedUser = await newUser.save();
-
-  // Return user without password
-  const { password, ...userWithoutPassword } = savedUser.toObject();
-  return userWithoutPassword;
 };
 
-// Authenticate user (login)
+
+// ================= AUTHENTICATE =================
 export const authenticate = async (userCred) => {
-  const { email, password } = userCred;
 
-  // Find user by email
-  const user = await UserModel.findOne({ email });
+  try {
 
-  if (!user) {
-    throw new Error("Invalid credentials");
+    const { email, password } = userCred;
+
+    console.log("LOGIN EMAIL:", email);
+
+    // find user
+    const user = await UserModel.findOne({ email });
+
+    console.log("USER FOUND:", user);
+
+    // user not found
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // compare passwords
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    console.log("PASSWORD MATCH:", isPasswordValid);
+
+    // invalid password
+    if (!isPasswordValid) {
+      throw new Error("Wrong password");
+    }
+
+    // generate JWT token
+    const token = jwt.sign(
+      {
+        userId: user._id,
+        email: user.email,
+        role: user.role
+      },
+      process.env.JWT_SECRET || "your_secret_key",
+      {
+        expiresIn: "1h"
+      }
+    );
+
+    // remove password before sending
+    const { password: _, ...userWithoutPassword } =
+      user.toObject();
+
+    return {
+      token,
+      user: userWithoutPassword
+    };
+
+  } catch (err) {
+
+    console.log("AUTHENTICATION ERROR:", err);
+
+    throw err;
   }
-
-  // Check password
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-
-  if (!isPasswordValid) {
-    throw new Error("Invalid credentials");
-  }
-
-  // Generate JWT token
-  const token = jwt.sign(
-    { userId: user._id, email: user.email, role: user.role },
-    process.env.JWT_SECRET || "your_secret_key",
-    { expiresIn: "1h" }
-  );
-
-  // Return token and user data (without password)
-  const { password: _, ...userWithoutPassword } = user.toObject();
-  
-  return {
-    token,
-    user: userWithoutPassword
-  };
 };

@@ -47,6 +47,7 @@ const connectDB = async () => {
   } catch (err) {
     console.log("Err in DB connection", err);
   }
+  console.log(process.env.DB_URL);
 };
 
 connectDB();
